@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone, User } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/asserts/logo.png";
 
 export default function About() {
   return (

@@ -12,10 +12,10 @@ import {
   Info,
   Sparkles
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/asserts/logo.png";
 
 export const Navigation = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -152,7 +152,7 @@ export const Navigation = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={signOut}
+              onClick={logout}
               className="transition-smooth hover:scale-110 hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
