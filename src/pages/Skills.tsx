@@ -17,58 +17,53 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { BookOpen, Plus, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-import { apiService } from '@/services/api.service';
+import { apiService } from "@/services/api.service";
 
-interface Skill {
+// Types
+type Skill = {
     id: string;
     name: string;
     description: string;
     difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" | "MASTER";
-}
+};
 
-interface UserSkill {
+type UserSkillDto = {
     id: string;
-    skillType: "TEACH" | "LEARN";
-    proficiency: string;
-    skill: Skill;
-}
+    skillType?: "TEACH" | "LEARN";
+    proficiency?: string;
+    skill?: Skill; // backend now returns nested skill
+};
 
 export default function Skills() {
     const { user } = useAuth();
+
     const [skills, setSkills] = useState<Skill[]>([]);
-    const [userSkills, setUserSkills] = useState<UserSkill[]>([]);
+    const [userSkills, setUserSkills] = useState<UserSkillDto[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
     const [skillType, setSkillType] = useState<"TEACH" | "LEARN">("LEARN");
     const [proficiency, setProficiency] = useState<string>("BEGINNER");
 
     useEffect(() => {
-        fetchSkills();
-        if (user?.id) fetchUserSkills(user.id);
+        void loadBase();
     }, [user?.id]);
 
-    const fetchSkills = async () => {
+    async function loadBase() {
         try {
-            const res = await apiService.get<Skill[]>('/skills');
-            setSkills(res.data || []);
+            const [skillsRes, userSkillsRes] = await Promise.all([
+                apiService.get<Skill[]>("/skills"),
+                user?.id ? apiService.get<UserSkillDto[]>(`/user-skills/me?userId=${user.id}`) : Promise.resolve({ data: [] }),
+            ]);
+            setSkills(skillsRes.data ?? []);
+            setUserSkills(userSkillsRes.data ?? []);
         } catch (err) {
             console.error(err);
-            toast({ title: 'Error', description: 'Failed to load skills.', variant: 'destructive' });
+            toast({ title: "Error", description: "Failed to load skills.", variant: "destructive" });
         }
-    };
+    }
 
-    const fetchUserSkills = async (userId: string) => {
-        try {
-            const res = await apiService.get<UserSkill[]>(`/user-skills/me?userId=${userId}`);
-            setUserSkills(res.data || []);
-        } catch (err) {
-            console.error(err);
-            toast({ title: "Error", description: "Failed to load your skills.", variant: "destructive" });
-        }
-    };
-
-    const handleAddSkill = async () => {
-        if (!user || !selectedSkill) return;
+    async function handleAddSkill() {
+        if (!user?.id || !selectedSkill) return;
 
         try {
             const body = {
@@ -78,14 +73,14 @@ export default function Skills() {
                 proficiency,
             };
 
-            const res = await apiService.post<UserSkill>('/user-skills', body);
+            const res = await apiService.post<UserSkillDto>("/user-skills", body);
             if (res.error) throw new Error(res.error);
 
             toast({
-                title: "Skill Added!",
+                title: "Skill added",
                 description: `${selectedSkill.name} added to your ${skillType.toLowerCase()} skills.`,
             });
-            fetchUserSkills(user.id);
+            await refreshUserSkills();
         } catch (err) {
             console.error(err);
             toast({
@@ -94,13 +89,19 @@ export default function Skills() {
                 variant: "destructive",
             });
         }
-    };
+    }
 
-    const filteredSkills = skills.filter((skill) =>
-        skill.name.toLowerCase().includes(searchQuery.toLowerCase())
+    async function refreshUserSkills() {
+        if (!user?.id) return;
+        const res = await apiService.get<UserSkillDto[]>(`/user-skills/me?userId=${user.id}`);
+        setUserSkills(res.data ?? []);
+    }
+
+    const filteredSkills = (skills ?? []).filter((s) =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const getDifficultyColor = (difficulty: Skill["difficulty"]) => {
+    function getDifficultyColor(difficulty: Skill["difficulty"]) {
         const colorMap = {
             BEGINNER: "bg-green-500/20 text-green-400 border-green-500/30",
             INTERMEDIATE: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -109,11 +110,11 @@ export default function Skills() {
             MASTER: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
         } as const;
         return colorMap[difficulty] || "bg-secondary";
-    };
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-            <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500"></div>
+            <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500" />
             <div className="container mx-auto px-4 py-8 space-y-8">
 
                 {/* Header */}
@@ -122,20 +123,16 @@ export default function Skills() {
                         <h1 className="text-5xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
                             Skills
                         </h1>
-                        <p className="text-gray-300 text-lg">
-                            Discover and add skills to your profile
-                        </p>
+                        <p className="text-gray-300 text-lg">Discover and add skills to your profile</p>
                     </div>
                     <Link to="/courses">
-                        <Button variant="secondary" size="lg">
-                            View All Courses
-                        </Button>
+                        <Button variant="secondary" size="lg">View All Courses</Button>
                     </Link>
                 </div>
 
-                {/* Search Bar */}
+                {/* Search */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search skills..."
                         value={searchQuery}
@@ -145,30 +142,30 @@ export default function Skills() {
                 </div>
 
                 {/* My Skills */}
-                {userSkills.length > 0 && (
+                {Array.isArray(userSkills) && userSkills.length > 0 && (
                     <Card className="bg-slate-900/80 border-slate-700 backdrop-blur-sm shadow-2xl">
                         <CardHeader className="border-b border-slate-700">
-                            <div className="h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 mb-4 rounded-full"></div>
+                            <div className="h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500 mb-4 rounded-full" />
                             <CardTitle className="text-white text-2xl">My Skills</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {userSkills.map((userSkill) => (
+                                {userSkills.map((us) => (
                                     <div
-                                        key={userSkill.id}
+                                        key={us.id}
                                         className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:bg-slate-800 transition-all"
                                     >
                                         <div>
                                             <h3 className="font-semibold text-white">
-                                                {userSkill.skill?.name || "Unknown Skill"}
+                                                {us.skill?.name ?? "Unknown Skill"}
                                             </h3>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {userSkill.skillType}
-                                                </Badge>
-                                                <Badge className="text-xs">
-                                                    {userSkill.proficiency}
-                                                </Badge>
+                                                {us.skillType && (
+                                                    <Badge variant="secondary" className="text-xs">{us.skillType}</Badge>
+                                                )}
+                                                {us.proficiency && (
+                                                    <Badge className="text-xs">{us.proficiency}</Badge>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -219,13 +216,12 @@ export default function Skills() {
                                                 Choose whether you want to teach or learn this skill
                                             </DialogDescription>
                                         </DialogHeader>
+
                                         <div className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label>Type</Label>
                                                 <Select value={skillType} onValueChange={(v) => setSkillType(v as "TEACH" | "LEARN")}>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="TEACH">Teach</SelectItem>
                                                         <SelectItem value="LEARN">Learn</SelectItem>
@@ -236,9 +232,7 @@ export default function Skills() {
                                             <div className="space-y-2">
                                                 <Label>Proficiency</Label>
                                                 <Select value={proficiency} onValueChange={setProficiency}>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="BEGINNER">Beginner</SelectItem>
                                                         <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>

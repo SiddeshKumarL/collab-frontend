@@ -30,7 +30,7 @@ type UserSkillItem = {
 
 interface Profile {
     id: string;
-    full_name: string;
+    fullname: string;
     bio?: string;
     linkedin_url?: string;
     github_url?: string;
@@ -197,10 +197,10 @@ export default function Profile() {
                             <Avatar className="h-24 w-24 mx-auto mb-4 border-4 border-purple-500">
                                 <AvatarImage src={profile.avatar_url} />
                                 <AvatarFallback className="bg-gradient-to-br from-purple-500 to-cyan-500 text-white text-2xl">
-                                    {getInitials(profile?.full_name || user?.full_name || user?.email || "User")}
+                                    {getInitials(profile?.fullname || user?.fullName || user?.email || "User")}
                                 </AvatarFallback>
                             </Avatar>
-                            <CardTitle className="text-white">{profile.full_name || "Unnamed User"}</CardTitle>
+                            <CardTitle className="text-white">{profile.fullname || "Unnamed User"}</CardTitle>
                             <CardDescription className="text-gray-400">{user?.email}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-6">
@@ -231,7 +231,7 @@ export default function Profile() {
                             <form onSubmit={handleSaveProfile} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="full_name">Full Name</Label>
-                                    <Input id="full_name" name="full_name" defaultValue={profile.full_name || ""} required />
+                                    <Input id="full_name" name="full_name" defaultValue={profile.fullname || ""} required />
                                 </div>
 
                                 <div className="space-y-2">

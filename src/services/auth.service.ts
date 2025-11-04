@@ -2,9 +2,10 @@ import { apiService } from './api.service';
 import { API_ENDPOINTS } from '@/config/api.config';
 
 export interface User {
+    fullName: string ;
     id: string;
     email: string;
-    full_name: string;
+
     avatar_url?: string;
     created_at?: string;
 }
@@ -75,12 +76,13 @@ class AuthService {
     }
 
     // 🔹 RESET PASSWORD
-    async resetPassword(email: string, newPassword: string | number): Promise<ApiResponse<any>> {
-        return apiService.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+    async resetPassword(email: string, newPassword: string | number): Promise<ApiResponse<{ message?: string }>> {
+        return apiService.post<{ message?: string }>(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
             email,
-            newPassword,
+            newPassword: String(newPassword),
         });
     }
+
 
     // 🔹 GET CURRENT USER
     async getCurrentUser(): Promise<ApiResponse<User>> {

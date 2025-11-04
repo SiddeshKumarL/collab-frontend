@@ -45,7 +45,7 @@ export default function Courses() {
     const fetchCourses = async () => {
         try {
             const res = await apiService.get<Course[]>("/courses");
-            setCourses(res.data || []);
+            setCourses(res.data ?? []);
         } catch (err) {
             console.error("Error fetching courses:", err);
         }
