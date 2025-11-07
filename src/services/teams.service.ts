@@ -2,15 +2,16 @@ import { apiService } from './api.service';
 import { API_ENDPOINTS } from '@/config/api.config';
 
 export interface Team {
-  id: string;
-  name: string;
-  topic: string;
-  description?: string;
-  capacity: number;
-  owner_id: string;
-  is_active: boolean;
-  created_at: string;
+    id: string;
+    name: string;
+    topic: string;
+    description: string;
+    capacity: number;
+    ownerId: string;
+    isActive: boolean;
+    createdAt: string;
 }
+
 
 export interface TeamMember {
   id: string;

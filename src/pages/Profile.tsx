@@ -55,7 +55,7 @@ export default function Profile() {
     const fetchProfile = async () => {
         try {
             // 1) Profile
-            const profileRes = await apiService.get<Profile>(`${API_ENDPOINTS.PROFILES}/${user!.id}`);
+            const profileRes = await apiService.get<Profile>(`${API_ENDPOINTS.PROFILES}/user/${user!.id}`);
             if (!profileRes.data) throw new Error(profileRes.error || "Failed to load profile");
             const data = profileRes.data;
 

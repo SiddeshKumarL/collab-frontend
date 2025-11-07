@@ -144,7 +144,7 @@ Headers: `Authorization: Bearer {token}`
 Request body:
 ```json
 {
-  "status": "ACCEPTED" // or "REJECTED"
+  "status": "ACCEPTED" 
 }
 ```
 

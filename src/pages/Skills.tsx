@@ -24,25 +24,24 @@ type Skill = {
     id: string;
     name: string;
     description: string;
-    difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" | "MASTER";
+    difficulty: string;
 };
 
 type UserSkillDto = {
     id: string;
     skillType?: "TEACH" | "LEARN";
     proficiency?: string;
-    skill?: Skill; // backend now returns nested skill
+    skill?: Skill;
 };
 
 export default function Skills() {
     const { user } = useAuth();
-
     const [skills, setSkills] = useState<Skill[]>([]);
     const [userSkills, setUserSkills] = useState<UserSkillDto[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
     const [skillType, setSkillType] = useState<"TEACH" | "LEARN">("LEARN");
-    const [proficiency, setProficiency] = useState<string>("BEGINNER");
+    const [proficiency, setProficiency] = useState("BEGINNER");
 
     useEffect(() => {
         void loadBase();
@@ -52,13 +51,28 @@ export default function Skills() {
         try {
             const [skillsRes, userSkillsRes] = await Promise.all([
                 apiService.get<Skill[]>("/skills"),
-                user?.id ? apiService.get<UserSkillDto[]>(`/user-skills/me?userId=${user.id}`) : Promise.resolve({ data: [] }),
+                user?.id
+                    ? apiService.get<UserSkillDto[]>(`/user-skills/me?userId=${user.id}`)
+                    : Promise.resolve({ data: [] }),
             ]);
-            setSkills(skillsRes.data ?? []);
+
+            console.log("✅ Skills from backend:", skillsRes.data);
+            console.log("✅ User skills from backend:", userSkillsRes.data);
+
+            const normalizedSkills = (skillsRes.data ?? []).map((s) => ({
+                ...s,
+                difficulty: s.difficulty?.toUpperCase?.() || "BEGINNER",
+            }));
+
+            setSkills(normalizedSkills);
             setUserSkills(userSkillsRes.data ?? []);
         } catch (err) {
-            console.error(err);
-            toast({ title: "Error", description: "Failed to load skills.", variant: "destructive" });
+            console.error("❌ Error loading skills:", err);
+            toast({
+                title: "Error",
+                description: "Failed to load skills.",
+                variant: "destructive",
+            });
         }
     }
 
@@ -220,7 +234,10 @@ export default function Skills() {
                                         <div className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label>Type</Label>
-                                                <Select value={skillType} onValueChange={(v) => setSkillType(v as "TEACH" | "LEARN")}>
+                                                <Select
+                                                    value={skillType}
+                                                    onValueChange={(v) => setSkillType(v as "TEACH" | "LEARN")}
+                                                >
                                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="TEACH">Teach</SelectItem>
